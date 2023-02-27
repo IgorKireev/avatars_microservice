@@ -1,23 +1,13 @@
-from fastapi import FastAPI, UploadFile, Path, File, Query
-from pydantic import BaseModel, Field
+import datetime
+
+from fastapi import FastAPI, UploadFile, Path, File, Query, HTTPException
 import random
 import string
 from db import connection
 from json import dumps
 from secrets import token_bytes
-class CreateFileUploadArgsModel(BaseModel):
-    id: int = Field(example=1)
-    flags: dict = Field(
-     example={
-        "timestamp": 123123123,
-        "ip": "1.1.1.1",
-        "target": "avatar"
-    })
+from models import *
 
-class CreateFileUploadResponseModel(BaseModel):
-    url: str = Field(example='http://127.0.0.1:8000/upload/ABCDEFGHIJ')
-    image_id: str = Field(example='ABCDEFGHIJ')
-    key: str = Field(example='0x7487b4a3')
 
 app = FastAPI()
 
@@ -31,7 +21,7 @@ app = FastAPI()
         }
     }
 )
-def create(form: CreateFileUploadArgsModel):
+def create_file(form: CreateFileUploadArgsModel):
     array = [random.choice(string.ascii_uppercase) for i in range(10)]
     key = token_bytes(16).hex()
     while True:
@@ -39,25 +29,91 @@ def create(form: CreateFileUploadArgsModel):
             image_id = ''.join(array)
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    INSERT INTO info_avatars(image_id, key, flags)
-                    VALUES(%s, %s, %s)
+                    INSERT INTO info_avatars(image_id, key, status, flags)
+                    VALUES(%s, %s, FALSE, %s)
                         """, (image_id, key, dumps(form.flags)))
                 connection.commit()
                 url = f'/upload/{image_id}'
             break
         except :
             print('Error')
-    return {'url': url, 'image_id': image_id, 'key':key}
+    return CreateFileUploadResponseModel
 
 @app.post(
     '/upload/{image_id}',
     summary='Загрузка файла'
 )
-async def get_upload(
+async def upload_media(
     file: UploadFile = File(description='Image uploaded by the client', example='Makima.jpg'),
     image_id: str = Path(description='The ID of the image to get', example='ABCDEFGHIJ'),
-    key: str = Query(description='a unique key is generated for each image', example='0x7487b4a3')
-):
-     with open(f'avatars/{image_id}.jpg', 'wb') as save_file:
+    key: str = Query(description='a unique key is generated for each image', example='b4d508cb4d4d82d2f6b685575551d6f4')
+) -> dict:
+    with connection.cursor() as cursor:
+        cursor.execute("""
+             SELECT status
+             FROM info_avatars
+             WHERE image_id=%s AND info_avatars.key=%s
+             """, (image_id, key))
+        result = cursor.fetchone()
+    if result is None:
+        raise HTTPException(status_code=404, detail='not found')
+    if result[0]:
+        raise HTTPException(status_code=404, detail='stop upload')
+    with open(f'avatars/{image_id}.jpg', 'wb') as save_file:
         save_file.write(await file.read())
-     return {'image_id':image_id, 'key':key, 'file':file}
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE info_avatars
+            SET status=TRUE 
+            WHERE image_id=%s
+        """, (image_id,))
+    connection.commit()
+    return {'image_id':image_id, 'key':key, 'file':file}
+
+@app.post('/change')
+def change_file(form: ChangeFileArgsModel) -> dict:
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 1
+            FROM info_avatars
+            WHERE image_id=%s       
+        """, (form.image_id,))
+        result = cursor.fetchone()
+    if result is None:
+        raise HTTPException(status_code=404, detail='not exists')
+    key = token_bytes(16).hex()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+               UPDATE info_avatars
+               SET status=FALSE, key=%s, changed_at=NOW()
+               WHERE image_id=%s
+           """, (key, form.image_id))
+    connection.commit()
+    url = f'/upload/{form.image_id}'
+    return {'url': url, 'image_id': form.image_id, 'key':key}
+
+@app.post('/search')
+def search_files(form: SearchFileArgsModel):
+    with connection.cursor() as cursor:
+        cursor.execute(f"""
+            SELECT *
+            FROM info_avatars
+            ORDER BY {form.order_by} {form.direction}
+            LIMIT %s OFFSET {form.offset}
+        """, (form.limit, ))
+        response = [
+            SearchFileEntryResponseModel(
+                image_id=i[1],
+                status=i[3],
+                created_at=i[4].timestamp(),
+                changed_at=i[5].timestamp(),
+                flags=i[6]
+            ) for i in cursor.fetchall()
+        ]
+        count = len(response)
+        cursor.execute("""
+            SELECT COUNT(1)
+            FROM info_avatars
+        """)
+        max_count = cursor.fetchone()[0]
+    return SearchFileResponseModel(count=count, response=response, max_count=max_count)

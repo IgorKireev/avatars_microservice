@@ -15,6 +15,9 @@ while True:
                 id SERIAL PRIMARY KEY, 
                 image_id VARCHAR(15) UNIQUE,
                 key VARCHAR(150),
+                status BOOLEAN,
+                created_at TIMESTAMP DEFAULT NOW(),
+                changed_at TIMESTAMP DEFAULT NOW(),
                 flags JSON)
             """)
         connection.commit()
