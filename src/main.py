@@ -1,5 +1,3 @@
-import datetime
-
 from fastapi import FastAPI, UploadFile, Path, File, Query, HTTPException
 import random
 import string
@@ -7,7 +5,6 @@ from db import connection
 from json import dumps
 from secrets import token_bytes
 from models import *
-
 
 app = FastAPI()
 
@@ -37,7 +34,7 @@ def create_file(form: CreateFileUploadArgsModel):
             break
         except :
             print('Error')
-    return CreateFileUploadResponseModel
+    return CreateFileUploadResponseModel(url=url, image_id=image_id, key=key)
 
 @app.post(
     '/upload/{image_id}',
@@ -101,8 +98,7 @@ def search_files(form: SearchFileArgsModel):
             ORDER BY {form.order_by} {form.direction}
             LIMIT %s OFFSET {form.offset}
         """, (form.limit, ))
-        response = [
-            SearchFileEntryResponseModel(
+        response = [SearchFileEntryResponseModel(
                 image_id=i[1],
                 status=i[3],
                 created_at=i[4].timestamp(),

@@ -1,17 +1,6 @@
 import datetime
 from pydantic import BaseModel, Field
 import enum
-"""class ImageId(str):
-    @classmethod
-    def validator(cls, v):
-        return cls(v)
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validator
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(pattern=,)"""
-
 
 class CreateFileUploadArgsModel(BaseModel):
     id: int = Field(example=1)

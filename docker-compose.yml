@@ -1,0 +1,19 @@
+version: "2"
+services:
+  avatars_micrservs:
+    build: .
+    container_name: avatars_micrservs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+    container_name: db_avatars
+    volumes:
+      - "./db:/var/lib/postgresql/data"
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+      - "POSTGRES_DB=postgres"
+      - "POSTGRES_PORT=5432"

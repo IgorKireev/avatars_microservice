@@ -1,0 +1,5 @@
+.idea
+db
+venv
+test_main.http
+**/__pycache__/

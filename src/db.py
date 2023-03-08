@@ -1,5 +1,6 @@
 import psycopg2
 import config
+import time
 
 while True:
     try:
@@ -24,4 +25,5 @@ while True:
         break
     except Exception as _ex:
         print('error while working with PostgeSQL', _ex)
+        time.sleep(5)
 
