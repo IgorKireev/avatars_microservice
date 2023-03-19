@@ -1,15 +1,23 @@
+from typing import Annotated
 import fastapi
-from fastapi import FastAPI, UploadFile, Path, File, Query, HTTPException
+from fastapi import FastAPI, UploadFile, Path, File, Query, Header, HTTPException, Depends
 import random
 import string
 from db import connection
 from json import dumps
 from secrets import token_bytes
 from models import *
+import config
+
 
 app = FastAPI()
+
+async def get_token_header(x_token: Annotated[str, Header()]):
+    if x_token != config.token:
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+
 public = fastapi.APIRouter(prefix="/public", tags=['public'])
-private = fastapi.APIRouter(prefix="/private", tags=['private'])
+private = fastapi.APIRouter(prefix="/private", tags=['private'], dependencies=[Depends(get_token_header)])
 
 @private.post(
     '/create',
