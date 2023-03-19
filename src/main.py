@@ -1,3 +1,4 @@
+import fastapi
 from fastapi import FastAPI, UploadFile, Path, File, Query, HTTPException
 import random
 import string
@@ -7,8 +8,10 @@ from secrets import token_bytes
 from models import *
 
 app = FastAPI()
+public = fastapi.APIRouter(prefix="/public", tags=['public'])
+private = fastapi.APIRouter(prefix="/private", tags=['private'])
 
-@app.post(
+@private.post(
     '/create',
     summary = 'Создание ссылки для загрузки файлов',
     responses= {
@@ -36,7 +39,7 @@ def create_file(form: CreateFileUploadArgsModel):
             print('Error')
     return CreateFileUploadResponseModel(url=url, image_id=image_id, key=key)
 
-@app.post(
+@public.post(
     '/upload/{image_id}',
     summary='Загрузка файла'
 )
@@ -67,7 +70,7 @@ async def upload_media(
     connection.commit()
     return {'image_id':image_id, 'key':key, 'file':file}
 
-@app.post('/change')
+@private.post('/change')
 def change_file(form: ChangeFileArgsModel) -> dict:
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -89,7 +92,7 @@ def change_file(form: ChangeFileArgsModel) -> dict:
     url = f'/upload/{form.image_id}'
     return {'url': url, 'image_id': form.image_id, 'key':key}
 
-@app.post('/search')
+@private.post('/search')
 def search_files(form: SearchFileArgsModel):
     with connection.cursor() as cursor:
         cursor.execute(f"""
@@ -113,3 +116,6 @@ def search_files(form: SearchFileArgsModel):
         """)
         max_count = cursor.fetchone()[0]
     return SearchFileResponseModel(count=count, response=response, max_count=max_count)
+
+app.include_router(public)
+app.include_router(private)
