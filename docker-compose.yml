@@ -2,14 +2,19 @@ version: "2"
 services:
   avatars_micrservs:
     build: .
-    container_name: avatars_micrservs
     ports:
       - "8000:8000"
     depends_on:
       - db
+    environment:
+      - ROOT_PATH=/
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+      - TOKEN_CHECK=2e3852bfdd5ac217592feb198051f8a8
   db:
     image: postgres:13
-    container_name: db_avatars
     volumes:
       - "./db:/var/lib/postgresql/data"
     environment:
