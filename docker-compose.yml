@@ -8,6 +8,11 @@ services:
       - db
     environment:
       - ROOT_PATH=/
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+      - TOKEN_CHECK=2e3852bfdd5ac217592feb198051f8a8
   db:
     image: postgres:13
     volumes:
