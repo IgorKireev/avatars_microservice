@@ -51,6 +51,7 @@ def create_file(form: CreateFileUploadArgsModel):
     summary='Загрузка файла',
     responses= {
         200: {
+            'model': UploadFileResponseModel,
             'description': 'Файл успешно загружен'
         }
     }
@@ -59,7 +60,7 @@ async def upload_media(
     file: UploadFile = File(description='Image uploaded by the client', example='Makima.jpg'),
     image_id: str = Path(description='The ID of the image to get', example='ABCDEFGHIJ'),
     key: str = Query(description='a unique key is generated for each image', example='b4d508cb4d4d82d2f6b685575551d6f4')
-) -> dict:
+) -> UploadFileResponseModel:
     with connection.cursor() as cursor:
         cursor.execute("""
              SELECT status
@@ -80,7 +81,7 @@ async def upload_media(
             WHERE image_id=%s
         """, (image_id,))
     connection.commit()
-    return {'image_id':image_id, 'key':key, 'file':file}
+    return  UploadFileResponseModel(image_id=image_id, key=key, file=file)
 
 @private.post(
     '/change',
@@ -91,7 +92,7 @@ async def upload_media(
         }
     }
 )
-def change_file(form: ChangeFileArgsModel) -> dict:
+def change_file(form: ChangeFileArgsModel) -> ChangeFileResponseModel:
     with connection.cursor() as cursor:
         cursor.execute("""
             SELECT 1
@@ -110,7 +111,7 @@ def change_file(form: ChangeFileArgsModel) -> dict:
            """, (key, form.image_id))
     connection.commit()
     url = f'/upload/{form.image_id}'
-    return {'url': url, 'image_id': form.image_id, 'key':key}
+    return ChangeFileResponseModel(url=url, image_id=form.image_id, key=key)
 
 @private.post(
     '/search',

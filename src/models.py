@@ -1,3 +1,4 @@
+from fastapi import UploadFile
 import datetime
 from pydantic import BaseModel, Field
 import enum
@@ -16,9 +17,17 @@ class CreateFileUploadResponseModel(BaseModel):
     image_id: str = Field(example='ABCDEFGHIJ')
     key: str = Field(example='b4d508cb4d4d82d2f6b685575551d6f4')
 
+class UploadFileResponseModel(BaseModel):
+    image_id: str = Field(example='ABCDEFGHIJ')
+    key: str = Field(example='b4d508cb4d4d82d2f6b685575551d6f4')
+    file: UploadFile = Field(example='ABCDEFGHIJ.png')
+
 class ChangeFileArgsModel(BaseModel):
     image_id: str = Field(example='ABCDEFGHIJ')
     secret_key: str = Field(example='123456789')
+
+class ChangeFileResponseModel(CreateFileUploadResponseModel):
+    pass
 
 class OrderBy(enum.StrEnum):
     IMAGE_ID = 'image_id'
