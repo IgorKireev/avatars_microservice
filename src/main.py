@@ -1,6 +1,6 @@
 from typing import Annotated
 import fastapi
-from fastapi import FastAPI, UploadFile, Path, File, Query, Header, HTTPException, Depends
+from fastapi import *
 import random
 import string
 from db import connection
@@ -8,7 +8,6 @@ from json import dumps
 from secrets import token_bytes
 from models import *
 import config
-
 
 app = FastAPI()
 
@@ -49,7 +48,12 @@ def create_file(form: CreateFileUploadArgsModel):
 
 @public.post(
     '/upload/{image_id}',
-    summary='Загрузка файла'
+    summary='Загрузка файла',
+    responses= {
+        200: {
+            'description': 'Файл успешно загружен'
+        }
+    }
 )
 async def upload_media(
     file: UploadFile = File(description='Image uploaded by the client', example='Makima.jpg'),
@@ -78,7 +82,15 @@ async def upload_media(
     connection.commit()
     return {'image_id':image_id, 'key':key, 'file':file}
 
-@private.post('/change')
+@private.post(
+    '/change',
+    summary='Изменение файла',
+    responses= {
+        200: {
+            'description': 'Файл успешно изменён'
+        }
+    }
+)
 def change_file(form: ChangeFileArgsModel) -> dict:
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -100,7 +112,16 @@ def change_file(form: ChangeFileArgsModel) -> dict:
     url = f'/upload/{form.image_id}'
     return {'url': url, 'image_id': form.image_id, 'key':key}
 
-@private.post('/search')
+@private.post(
+    '/search',
+    summary='Получение информации из бд по аватаркам',
+    responses= {
+        200: {
+            'model': SearchFileResponseModel,
+            'description': 'Информация успешно получена'
+        }
+    }
+)
 def search_files(form: SearchFileArgsModel):
     with connection.cursor() as cursor:
         cursor.execute(f"""
