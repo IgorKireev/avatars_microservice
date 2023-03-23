@@ -16,6 +16,7 @@ build `.`
 ### Переменные окружения:
 #### Настройки сервиса
 - `TOKEN_CHECK: str`
+- `BASE_URL: str` 
 #### Запуск веб сервера
 - `ROOT_PATH: str`
 #### Настройки базы данных
@@ -23,5 +24,4 @@ build `.`
 - `DB_USER: str`
 - `DB_PASSWORD: str`
 - `DB_NAME: str`
-#### Генерация ссылки
-- `BASE_URL: str` 
+ 
