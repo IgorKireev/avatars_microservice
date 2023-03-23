@@ -11,7 +11,7 @@ import config
 
 app = FastAPI()
 
-async def get_token_header(x_token: Annotated[str, Header()]):
+async def get_token_header(x_token: str = Header(description='key for private url', example='2e3852bfdd5ac217592feb198051f8a8')):
     if x_token != config.token:
         raise HTTPException(status_code=400, detail="X-Token header invalid")
 
