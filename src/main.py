@@ -40,7 +40,7 @@ def create_file(form: CreateFileUploadArgsModel):
                     VALUES(%s, %s, FALSE, %s)
                         """, (image_id, key, dumps(form.flags)))
                 connection.commit()
-                url = f'/upload/{image_id}'
+                url = f'{config.base_url}/upload/{image_id}'
             break
         except :
             print('Error')
