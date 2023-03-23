@@ -23,3 +23,5 @@ build `.`
 - `DB_USER: str`
 - `DB_PASSWORD: str`
 - `DB_NAME: str`
+#### Генерация ссылки
+- `BASE_URL: str` 
