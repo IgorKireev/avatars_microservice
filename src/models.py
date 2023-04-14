@@ -58,3 +58,9 @@ class SearchFileResponseModel(BaseModel):
     count: int = Field(example=10)
     response: list[SearchFileEntryResponseModel]
     max_count: int = Field(example=100)
+
+class DeleteFileArgsModel(BaseModel):
+    image_id: str = Field(example='ABCDEFGHIJ')
+
+class DeleteFileResponseModel(BaseModel):
+    status: bool = Field(example=True)

@@ -8,6 +8,7 @@ from json import dumps
 from secrets import token_bytes
 from models import *
 import config
+import os
 
 app = FastAPI()
 
@@ -146,6 +147,39 @@ def search_files(form: SearchFileArgsModel):
         """)
         max_count = cursor.fetchone()[0]
     return SearchFileResponseModel(count=count, response=response, max_count=max_count)
+
+
+@private.post(
+    '/delete',
+summary='Удаление файла',
+    responses= {
+        200: {
+            'model': DeleteFileResponseModel,
+            'description': 'Файл успешно удалён'
+        }
+    }
+)
+def delete_files(form: DeleteFileArgsModel):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 1
+            FROM info_avatars
+            WHERE image_id=%s       
+        """, (form.image_id,))
+        result = cursor.fetchone()
+    if result is None:
+        raise HTTPException(status_code=404, detail='not exists image_id')
+    with connection.cursor() as cursor:
+        cursor.execute("""
+               DELETE FROM info_avatars
+               WHERE image_id=%s
+           """, (form.image_id,))
+    connection.commit()
+    try:
+        os.remove(f'avatars/{form.image_id}.jpg')
+    except:
+        raise HTTPException(status_code=404, detail='not found file for delete')
+    return DeleteFileResponseModel(status=True)
 
 app.include_router(public)
 app.include_router(private)
